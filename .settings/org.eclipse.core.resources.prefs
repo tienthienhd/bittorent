@@ -1,0 +1,9 @@
+eclipse.preferences.version=1
+encoding//src/announce/http/HttpRequestMessage.java=UTF-8
+encoding//src/management/MessageReceiver.java=UTF-8
+encoding//src/management/Piece.java=UTF-8
+encoding//src/message/BitfieldMessage.java=UTF-8
+encoding//src/message/HaveMessage.java=UTF-8
+encoding//src/message/KeepAliveMessage.java=UTF-8
+encoding//src/torrentfile/TorrentFile.java=UTF-8
+encoding//src/utils/Utils.java=UTF-8
