@@ -88,8 +88,8 @@ public class IOManager {
 			int remaining = (int) (files.get(fileIndex).getSize() - offsetFile);
 			if(remaining >= remainingData) {
 				files.get(fileIndex).write(data, offsetFile);
-//				remainingData = remainingData - remaining;
-				remainingData = 0;
+				remainingData = remainingData - remaining;
+//				remainingData = 0;
 			} else {
 				byte[] data1 = Utils.subArray(data, 0, remaining);
 				files.get(fileIndex).write(data1, offsetFile);
@@ -105,6 +105,28 @@ public class IOManager {
 		for (SaveSingleFile s : this.files) {
 			s.close();
 		}
+	}
+
+	public byte[] read(int offset, int length) {
+		byte[] data = new byte[length];
+		int offsetOnData = 0;
+		for(SaveSingleFile file : files) {
+			if(offset >= file.getSize()) {
+				offset -= file.getSize();
+			} else {
+				int remaining = (int) (file.getSize() - offset);
+				if(remaining >= length) {
+					file.read(data, offset, length);
+					return data;
+				} else {
+					length -= remaining;
+					offsetOnData += remaining;
+					file.read(data, offset, remaining, offsetOnData);
+					offset += remaining;
+				}
+			}
+		}
+		return data;
 	}
 }
 
@@ -141,7 +163,27 @@ class SaveSingleFile {
 	}
 
 	public int read(byte[] data, int offset, int length) {
-		return 0;
+		try {
+			return raf.read(data, offset, length);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
+	public int read(byte[] data, int offset, int length, int offsetOnData) {
+		byte[] tmp = new byte[length];
+		try {
+			raf.read(tmp, offset, length);
+			for(int i = 0; i < length; i++) {
+				data[offsetOnData + i] = tmp[i];
+			}
+			return length;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return -1;
 	}
 
 	public void close() throws IOException {

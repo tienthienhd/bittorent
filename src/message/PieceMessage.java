@@ -11,7 +11,6 @@ public class PieceMessage extends PeerMessage {
 		private int offset;
 		private byte[] block;
 
-		// khởi tạo
 		public PieceMessage(byte[] payload, int pieceIndex, int offset, byte[] block) {
 			super(MessageType.PIECE, payload);
 			this.pieceIndex = pieceIndex;
@@ -31,7 +30,6 @@ public class PieceMessage extends PeerMessage {
 			return this.block;
 		}
 
-		// phân tích payload và trả về PeerMessage tương ứng với payload
 		public static PieceMessage parse(byte[] payload) {
 			int pieceIndex = Utils.byteArrayToInt(payload);
 			int offset = Utils.byteArrayToInt(Utils.subArray(payload, 4, 4));
@@ -39,7 +37,6 @@ public class PieceMessage extends PeerMessage {
 			return new PieceMessage(payload, pieceIndex, offset, block);
 		}
 
-		// tạo 1 PeerMessage từ các dữ liệu cung cấp
 		public static PieceMessage craft(int pieceIndex, int offset, byte[] block) {
 			byte[] payload = Utils.concatArray(Utils.intToByteArray(pieceIndex), 
 					Utils.concatArray(Utils.intToByteArray(offset), block));

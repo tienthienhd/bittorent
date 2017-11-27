@@ -19,4 +19,5 @@ public interface IDownloadManager {
 	public void acceptConnection(Socket s);
 	
 	public BitSet getReceived();
+	public byte[] getBlock(int index, int offsetOnPiece, int length);
 }

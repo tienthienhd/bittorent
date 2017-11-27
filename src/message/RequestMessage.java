@@ -43,7 +43,6 @@ public class RequestMessage extends PeerMessage {
 		return this.pieceIndex;
 	}
 
-	// phân tích payload và trả về PeerMessage tương ứng với payload
 	public static RequestMessage parse(byte[] payload) {
 		int pieceIndex = Utils.byteArrayToInt(payload);
 		int offset = Utils.byteArrayToInt(Utils.subArray(payload, 4, 4));
@@ -51,7 +50,6 @@ public class RequestMessage extends PeerMessage {
 		return new RequestMessage(payload, pieceIndex, offset, length);
 	}
 	
-	// tạo 1 PeerMessage từ các dữ liệu cung cấp
 	public static RequestMessage craft(int pieceIndex, int offset, int length) {
 		byte[] payload = Utils.concatArray(Utils.intToByteArray(pieceIndex),
 						Utils.concatArray(Utils.intToByteArray(offset), 
@@ -59,7 +57,6 @@ public class RequestMessage extends PeerMessage {
 		return new RequestMessage(payload, pieceIndex, offset, length);
 	}
 	
-	// tạo 1 PeerMessage từ các dữ liệu cung cấp
 		public static PeerMessage craft(int pieceIndex, int offset) {
 			byte[] payload = Utils.concatArray(Utils.intToByteArray(pieceIndex),
 					Utils.concatArray(Utils.intToByteArray(offset), 

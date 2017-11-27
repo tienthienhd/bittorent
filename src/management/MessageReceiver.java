@@ -164,7 +164,7 @@ public class MessageReceiver extends Thread {
 					}
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+//				e.printStackTrace(); //FIXME: comment socket exception
 				//System.out.println(e);
 				this.fireMessageReceived(null);
 				return;

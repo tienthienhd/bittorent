@@ -29,25 +29,37 @@ public class DownloadManager implements IDownloadManager {
 	private IOManager ioManager;
 	private ConnectionListener connListener;
 	Timer timeUpdatePeer = null;
+	private int hasPieces = 0;
 
 	public DownloadManager(TorrentFile torrent) {
 		this.torrent = torrent;
 		this.clientId = Utils.generateID();
 		this.announce = new Announce(torrent, clientId, this);
 		this.tasks = new ArrayList<DownloadTask>();
+		this.ioManager = new IOManager(torrent);
+		this.connListener = new ConnectionListener(this);
 
 		this.requested = new BitSet(torrent.getPieces().size());
 		this.received = new BitSet(torrent.getPieces().size());
 
 		this.pieces = new TreeMap<Integer, Piece>();
 		int lengthPiece = torrent.getPieceLength();
-		for (int i = 0; i <= torrent.getTotalLength() / lengthPiece; i++) {
-			Piece piece = new Piece(i, lengthPiece, torrent.getPieces().get(i));
-			this.pieces.put(i, piece);
-		}
+//		for (int i = 0; i <= torrent.getTotalLength() / lengthPiece; i++) {
+//			Piece piece = new Piece(i, lengthPiece, torrent.getPieces().get(i));
+//			this.pieces.put(i, piece);
+//			if (checkComplete(piece)) {
+//				this.received.set(i);
+//			}
+//		}
 
-		this.ioManager = new IOManager(torrent);
-		this.connListener = new ConnectionListener(this);
+	}
+
+	private boolean checkComplete(Piece piece) {
+		boolean complete = false;
+//		piece.setBlock(0, this.getDataPiece(piece.getPieceIndex()));
+		complete = piece.verify();
+		piece.clear();
+		return complete;
 	}
 
 	public void start() throws InterruptedException {
@@ -78,9 +90,10 @@ public class DownloadManager implements IDownloadManager {
 	}
 
 	public int getNbPiece() {
-		// System.out.println(this.torrent.getTotalLength() + " || " +
-		// this.torrent.getPieceLength());
-		return (int) Math.ceil(this.torrent.getTotalLength() / this.torrent.getPieceLength());
+//		 System.out.println(this.torrent.getTotalLength() + " || " +
+//		 this.torrent.getPieceLength());
+//		return (int) Math.ceil(this.torrent.getTotalLength() / this.torrent.getPieceLength());
+		return this.torrent.getNbPiece();
 	}
 
 	public synchronized BitSet getReceived() {
@@ -91,7 +104,8 @@ public class DownloadManager implements IDownloadManager {
 
 	public int getPieceLength(int index) {
 		if (index == this.getNbPiece() - 1) {
-			return (int) (this.torrent.getTotalLength() - (this.getNbPiece() - 1) * this.torrent.getPieceLength());
+//			return (int) (this.torrent.getTotalLength() - (this.getNbPiece() - 1) * this.torrent.getPieceLength());
+			return (int) (this.torrent.getTotalLength() % this.torrent.getPieceLength());
 		}
 		return this.torrent.getPieceLength();
 	}
@@ -148,6 +162,7 @@ public class DownloadManager implements IDownloadManager {
 			this.ioManager.write(piece.getDataPiece(), piece.getPieceIndex() * torrent.getPieceLength());
 			this.received.set(piece.getPieceIndex());
 			this.sendHaveMessage(piece.getPieceIndex());
+			System.out.println("\t\t\t\t\t\t\t\t\tHave: " + ++this.hasPieces + "/" + this.getNbPiece()  + "pieces.");
 			piece.clear();
 			if (checkComplete()) {
 				System.out.println("Download complete!");
@@ -203,5 +218,14 @@ public class DownloadManager implements IDownloadManager {
 			this.tasks.add(dt);
 			dt.start();
 		}
+	}
+
+	@Override
+	public byte[] getBlock(int index, int offsetOnPiece, int length) {
+		return this.ioManager.read(index * torrent.getPieceLength() + offsetOnPiece, length);
+	}
+	
+	public byte[] getDataPiece(int pieceIndex) {
+		return this.ioManager.read(pieceIndex * torrent.getPieceLength(), torrent.getPieceLength());
 	}
 }

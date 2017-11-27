@@ -3,6 +3,7 @@ package management;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.BitSet;
 
@@ -58,10 +59,10 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 			public void actionPerformed(ActionEvent e) {
 				System.out.println("reconnect to " + peer.getIp().getHostAddress() + ":" + peer.getPort());
 				if (reconnect()) {
-					if (countReconnect >= 3) {
+					if (countReconnect >= 1) {
 						interrupt();
-						// System.out.println("interrupt");
 						timeToReconnect.stop();
+//						System.out.println("interrupt");
 						return;
 					}
 					countReconnect++;
@@ -81,7 +82,8 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 		} catch (IOException e) {
 			// Thread.yield();
 			// e.printStackTrace();
-//			System.out.println(e + " to " + this.peer.getIp() + ":" + this.peer.getPort());
+			// System.out.println(e + " to " + this.peer.getIp() + ":" +
+			// this.peer.getPort());
 			return false;
 		}
 		this.isHandshaking = true;
@@ -92,6 +94,19 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 
 	public void run() {
 		if (this.init()) {
+			Timer timer = new Timer(5000, new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					System.out.println("Resend request");
+					if (piece != null) {
+						System.out.println("send request");
+						sendRequest();
+					}
+				}
+			});
+			// timer.start();
+
 			this.receiver.start();
 			this.sender.start();
 
@@ -111,7 +126,8 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 			this.dropConnection();
 			return;
 		}
-//		System.out.println(Thread.currentThread().getName() + " received: " + msg.getType());
+		// System.out.println(Thread.currentThread().getName() + " received: " +
+		// msg.getType());
 		MessageType type = msg.getType();
 		switch (type) {
 		case HANDSHAKE:
@@ -144,6 +160,10 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 			break;
 		case PIECE:
 			PieceMessage pm = (PieceMessage) msg;
+			// System.out.println("received piece: " + pm.getPieceIndex());//TODO: delete
+//			if(pm.getPieceIndex() == 22) {
+//				System.out.println("length = " + pm.getPayload().length + ": : " + Utils.bytesToHex(pm.getPayload()));
+//			}
 			this.handlePieceMessage(pm.getPieceIndex(), pm.getOffset(), pm.getBlock());
 			break;
 		case CANCEL:
@@ -167,13 +187,13 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 			this.isInteresting = true;
 			this.receiver.setHandshake(true);
 			this.sender.addMessage(InterestedMessage.craft());
-//			BitSet bitfield = this.dlManager.getReceived();
-//			this.sender.addMessage(BitfieldMessage.craft(bitfield));
-//			for(int i = 0; i < bitfield.length(); i++) {
-//				if(bitfield.get(i)) {
-//					this.sender.addMessage(HaveMessage.craft(i));
-//				}
-//			}
+			// BitSet bitfield = this.dlManager.getReceived();
+			// this.sender.addMessage(BitfieldMessage.craft(bitfield));
+			// for(int i = 0; i < bitfield.length(); i++) {
+			// if(bitfield.get(i)) {
+			// this.sender.addMessage(HaveMessage.craft(i));
+			// }
+			// }
 			this.sender.notifySend();
 		}
 	}
@@ -189,11 +209,9 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 
 		// =====================
 		if (this.piece == null) {
-			Piece p = this.dlManager.choosePiece(this.bitfield);
-			if (p != null) {
-				this.piece = p;
-//				System.out.println(Thread.currentThread().getName() + " choose piece " + p.getPieceIndex())
-				this.requested = new BitSet(p.getNbBlock());
+			if (choosePiece()) {
+				this.requested = new BitSet(this.piece.getNbBlock());
+				this.sendRequest();
 			}
 		} else {
 			this.sendRequest();
@@ -215,15 +233,13 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 	@Override
 	public void handleHaveMessage(int piece) {
 		this.bitfield.set(piece);
-//		System.out.println(Utils.bytesToHex(bitfield.toByteArray()));
+		// System.out.println(Utils.bytesToHex(bitfield.toByteArray()));
 
 		// =====================
 		if (this.piece == null) {
-			Piece p = this.dlManager.choosePiece(this.bitfield);
-			if (p != null) {
-				this.piece = p;
-//				System.out.println(Thread.currentThread().getName() + " choose piece " + p.getPieceIndex());
-				this.requested = new BitSet(p.getNbBlock());
+			if (choosePiece()) {
+				this.requested = new BitSet(this.piece.getNbBlock());
+				this.sendRequest();
 			}
 		} else {
 			this.sendRequest();
@@ -235,11 +251,9 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 		this.bitfield = BitSet.valueOf(bitfield);
 		// =====================
 		if (this.piece == null) {
-			Piece p = this.dlManager.choosePiece(this.bitfield);
-			if (p != null) {
-				this.piece = p;
-//				System.out.println(Thread.currentThread().getName() + " choose piece " + p.getPieceIndex());
-				this.requested = new BitSet(p.getNbBlock());
+			if (choosePiece()) {
+				this.requested = new BitSet(this.piece.getNbBlock());
+				this.sendRequest();
 			}
 		} else {
 			this.sendRequest();
@@ -248,28 +262,46 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 
 	@Override
 	public void handleRequestMessage(int index, int begin, int length) {
-		
+		byte[] block = this.dlManager.getBlock(index, begin, length);
+		this.sender.addMessage(PieceMessage.craft(index, begin, block));
 	}
 
 	@Override
 	public void handlePieceMessage(int index, int begin, byte[] block) {
-		// System.out.println("Received piece: " + index + " block: " + begin);
-		if (this.piece.getPieceIndex() == index) {
+		if (this.piece != null && this.piece.getPieceIndex() == index) {//TODO: may be piece == null
 			this.piece.setBlock(begin, block);
 			if (this.piece.checkComplete() && this.piece.verify()) {
 				System.out.println("Download piece " + this.piece.getPieceIndex() + " successful" + " from "
 						+ this.peer.getIp() + ":" + this.peer.getPort());
 				dlManager.savePiece(this.piece);
-				this.piece = null;
-				Piece p = this.dlManager.choosePiece(this.bitfield);
-				if (p != null) {
-					this.piece = p;
-					this.requested = new BitSet(p.getNbBlock());
-//					System.out
-//							.println(Thread.currentThread().getName() + " choose piece " + this.piece.getPieceIndex());
+				
+				if (choosePiece()) {
+					this.requested = new BitSet(this.piece.getNbBlock());
 					this.sendRequest();
 				}
+			} else if (this.piece.checkComplete()) {
+				this.dlManager.releaseRequested(index);
+				this.piece.clear();
+				if (choosePiece()) {
+					this.requested = new BitSet(this.piece.getNbBlock());
+					this.sendRequest();
+				}
+			} else if(this.piece.checkComplete() && !this.piece.verify()) {
+				System.out.println("SHA1 don't match!");
+			} else {
+				System.out.println("checkComplete failed, current nb block:" + this.piece.getCurrentNbBlock());
+				
 			}
+		}
+	}
+
+	private boolean choosePiece() {
+		if (this.piece != null)
+			this.piece.clear();
+		if ((this.piece = this.dlManager.choosePiece(this.bitfield)) != null) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 
@@ -356,9 +388,9 @@ public class DownloadTask extends Thread implements HandleMessageReceive {
 		this.sender.addMessage(HaveMessage.craft(pieceIndex));
 		this.sender.notifySend();
 	}
-	
+
 	public boolean isConnect() {
-		return false;//(this.socket != null) && this.socket.isConnected() && this.sender != null;
+		return false;// (this.socket != null) && this.socket.isConnected() && this.sender != null;
 	}
-	
+
 }

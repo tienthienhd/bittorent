@@ -29,7 +29,8 @@ public class Client {
 			File fileTorrent = fileChooser.getSelectedFile();
 			TorrentFile torrent = new TorrentFile(fileTorrent);
 			System.out.println("download file: " + torrent.getName());
-
+//			torrent.printData(false);
+			
 			DownloadManager dm = new DownloadManager(torrent);
 			try {
 				dm.start();

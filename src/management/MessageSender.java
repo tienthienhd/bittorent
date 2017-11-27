@@ -16,6 +16,7 @@ public class MessageSender implements HandleMessageSend {
 	private OutputStream os;
 	private LinkedList<PeerMessage> queueMessage;
 	private Timer timer;
+	private Timer timerAutoSend;
 	private KeepAliveMessage keepAliveMessage;
 	
 	public MessageSender(OutputStream os) {
@@ -31,14 +32,24 @@ public class MessageSender implements HandleMessageSend {
 				notifySend();
 			}
 		});
+		
+		this.timerAutoSend = new Timer(1000, new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				notifySend();
+			}
+		});
 	}
 	
 	public void start() {
 		this.timer.start();
+		this.timerAutoSend.start();
 	}
 	
 	public void stopSend() {
 		this.timer.stop();
+		this.timerAutoSend.stop();
 		try {
 			this.os.close();
 		} catch (IOException e) {
@@ -53,6 +64,7 @@ public class MessageSender implements HandleMessageSend {
 			os.write(msg.generateMessageToSend());
 		} catch (IOException e) {
 			this.timer.stop();
+			this.timerAutoSend.stop();
 			e.printStackTrace();
 		}
 	}

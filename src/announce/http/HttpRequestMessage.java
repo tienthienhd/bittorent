@@ -6,29 +6,14 @@ import java.net.URL;
 import utils.Utils;
 
 public class HttpRequestMessage {
-	/**
-	 * Danh sÃ¡ch cÃ¡c Ä‘á»‹a chá»‰ cá»§a tracker
-	 */
 	private String announceUrl;
 	
-	/**
-	 * DÃ¹ng Ä‘á»ƒ Ä‘á»‹nh danh file
-	 */
 	private byte[] infoHash;
 	
-	/**
-	 * DÃ¹ng Ä‘á»ƒ Ä‘á»‹nh danh mÃ¡y tráº¡m
-	 */
 	private byte[] peerId;
 	
-	/**
-	 * Ä‘á»‹a chá»‰ mÃ¡y tráº¡m (cÃ³ thá»ƒ bá»� qua)
-	 */
 	private String ip;
 	
-	/**
-	 * Sá»‘ hiá»‡u cá»•ng giao tiáº¿p cá»§a mÃ¡y tráº¡m
-	 */
 	private int port;
 	
 

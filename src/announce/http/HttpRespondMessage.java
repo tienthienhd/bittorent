@@ -9,7 +9,6 @@ import torrentfile.TorrentFile;
 import utils.Utils;
 
 /**
- * Thông tin các dữ liệu gửi từ tracker
  * 
  * @author tienthien
  *

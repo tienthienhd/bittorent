@@ -21,12 +21,27 @@ public class Piece {
 	private int currentNbBlock;
 	
 	public Piece(int pieceIndex, int length, byte[] sha1) {
+//		if(pieceIndex == 22) {
+//			this.pieceIndex = pieceIndex;
+//			this.length = 16392;
+//			this.sha1 =sha1;
+//			this.offset = new TreeMap<Integer, Integer>();
+//			
+//			this.totalNbBlock = (int) Math.ceil((double)this.length/(double)BLOCK_SIZE);
+//			System.out.println("total nb block on piece " + pieceIndex + "(len = " + length + ") " + ": " + totalNbBlock);
+//			for(int i = 0; i < this.totalNbBlock; i++) {
+//				this.offset.put(i, i * BLOCK_SIZE);
+//			}
+//			this.block = new TreeMap<Integer, byte[]>();
+//			return;
+//		}
 		this.pieceIndex = pieceIndex;
 		this.length = length;
 		this.sha1 =sha1;
 		this.offset = new TreeMap<Integer, Integer>();
 		
-		this.totalNbBlock = (int) Math.ceil(length/BLOCK_SIZE);
+		this.totalNbBlock = (int) Math.ceil((double)length/(double)BLOCK_SIZE);
+//		System.out.println("total nb block on piece " + pieceIndex + "(len = " + length + ") " + ": " + totalNbBlock);
 		for(int i = 0; i < this.totalNbBlock; i++) {
 			this.offset.put(i, i * BLOCK_SIZE);
 		}
@@ -86,5 +101,9 @@ public class Piece {
 
 	public void clear() {
 		this.block.clear();
+	}
+	
+	public int getCurrentNbBlock() {
+		return this.currentNbBlock;
 	}
 }

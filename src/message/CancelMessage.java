@@ -7,14 +7,12 @@ import utils.Utils;
 
 public class CancelMessage extends PeerMessage {
 	
-	// kích thước phần dữ liệu thêm payload
 		private static final int PAYLOAD_LENGTH = 12;
 			
 		private int pieceIndex;
 		private int offset;
 		private int length;
 
-		// khởi tạo
 		public CancelMessage(byte[] payload, int pieceIndex, int offset, int length) {
 			super(MessageType.CANCEL, payload);
 			this.pieceIndex = pieceIndex;
@@ -34,7 +32,6 @@ public class CancelMessage extends PeerMessage {
 			return this.length;
 		}
 
-		// phân tích payload và trả về PeerMessage tương ứng với payload
 		public static CancelMessage parse(byte[] payload) {
 			int pieceIndex = Utils.byteArrayToInt(payload);
 			int offset = Utils.byteArrayToInt(Utils.subArray(payload, 4, 4));
@@ -42,7 +39,6 @@ public class CancelMessage extends PeerMessage {
 			return new CancelMessage(payload, pieceIndex, offset, length);
 		}
 
-		// tạo 1 PeerMessage từ các dữ liệu cung cấp
 		public static CancelMessage craft(int pieceIndex, int offset, int length) {
 			byte[] payload = Utils.concatArray(Utils.intToByteArray(pieceIndex),
 					Utils.concatArray(Utils.intToByteArray(offset), 

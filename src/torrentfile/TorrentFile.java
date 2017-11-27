@@ -140,6 +140,7 @@ public class TorrentFile {
 		for (int i = 0; i < name.size(); i++) {
 			System.out.println("\t" + (i + 1) + " : " + name.get(i) + " : " + length.get(i) + "(bytes)");
 		}
+		System.out.println("Total length: " + this.totalLength);
 
 		System.out.println("Info hash: " + new String(infoHash));
 		System.out.println("Piece length: " + pieceLength);
@@ -242,6 +243,10 @@ public class TorrentFile {
 
 	public boolean isSingleFile() {
 		return this.isSingleFile;
+	}
+	
+	public int getNbPiece() {
+		return this.pieces.size();
 	}
 
 	// test TorrentFile
